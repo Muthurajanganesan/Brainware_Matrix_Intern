@@ -1,0 +1,86 @@
+CREATE TABLE IF NOT EXISTS NewCustomers (
+    CustomerID INTEGER PRIMARY KEY,  
+    Name TEXT NOT NULL,
+    Email TEXT UNIQUE NOT NULL,
+    Phone TEXT NOT NULL,
+    Address TEXT
+);
+CREATE TABLE IF NOT EXISTS NewProducts (
+    ProductID INTEGER PRIMARY KEY,
+    ProductName TEXT NOT NULL,
+    Price REAL NOT NULL,
+    Stock INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS NewOrders (
+    OrderID INTEGER PRIMARY KEY,
+    CustomerID INTEGER NOT NULL,
+    OrderDate TEXT DEFAULT CURRENT_TIMESTAMP,
+    TotalAmount REAL NOT NULL,
+    Status TEXT CHECK(Status IN ('Pending', 'Shipped', 'Delivered', 'Cancelled')) DEFAULT 'Pending',
+    FOREIGN KEY (CustomerID) REFERENCES NewCustomers(CustomerID) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS NewOrderDetails (
+    OrderDetailID INTEGER PRIMARY KEY,
+    OrderID INTEGER NOT NULL,
+    ProductID INTEGER NOT NULL,
+    Quantity INTEGER NOT NULL,
+    Price REAL NOT NULL,
+    FOREIGN KEY (OrderID) REFERENCES NewOrders(OrderID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES NewProducts(ProductID) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS NewPayments (
+    PaymentID INTEGER PRIMARY KEY,
+    OrderID INTEGER NOT NULL,
+    PaymentDate TEXT DEFAULT CURRENT_TIMESTAMP,
+    Amount REAL NOT NULL,
+    PaymentMethod TEXT CHECK(PaymentMethod IN ('Credit Card', 'Debit Card', 'PayPal', 'COD')) NOT NULL,
+    PaymentStatus TEXT CHECK(PaymentStatus IN ('Pending', 'Completed', 'Failed')) DEFAULT 'Pending',
+    FOREIGN KEY (OrderID) REFERENCES NewOrders(OrderID) ON DELETE CASCADE
+);
+INSERT INTO NewCustomers (Name, Email, Phone, Address)
+VALUES ('John Doe', 'john@example.com', '9876543210', '123 Street, NY');
+
+INSERT INTO NewProducts (ProductName, Price, Stock)
+VALUES ('Laptop', 75000.00, 10);
+
+INSERT INTO NewOrders (CustomerID, TotalAmount, Status)
+VALUES (1, 150000.00, 'Pending');
+
+INSERT INTO NewOrderDetails (OrderID, ProductID, Quantity, Price)
+VALUES (1, 1, 2, 75000.00);
+
+UPDATE NewProducts
+SET Stock = Stock - 2
+WHERE ProductID = 1;
+
+INSERT INTO NewPayments (OrderID, Amount, PaymentMethod, PaymentStatus)
+VALUES (1, 150000.00, 'Credit Card', 'Completed');
+
+UPDATE NewOrders
+SET Status = 'Shipped'
+WHERE OrderID = 1;
+
+SELECT o.OrderID, o.OrderDate, o.TotalAmount, o.Status, 
+       p.ProductName, od.Quantity, od.Price
+FROM NewOrders o
+JOIN NewOrderDetails od ON o.OrderID = od.OrderID
+JOIN NewProducts p ON od.ProductID = p.ProductID
+WHERE o.CustomerID = 1;
+SELECT o.OrderID, o.OrderDate, o.TotalAmount, o.Status, 
+       p.ProductName, od.Quantity, od.Price
+FROM NewOrders o
+JOIN NewOrderDetails od ON o.OrderID = od.OrderID
+JOIN NewProducts p ON od.ProductID = p.ProductID
+WHERE o.CustomerID = 1;
+
+
+
+SELECT p.PaymentID, p.OrderID, c.Name AS CustomerName, p.Amount, p.PaymentMethod, p.PaymentStatus
+FROM NewPayments p
+JOIN NewOrders o ON p.OrderID = o.OrderID
+JOIN NewCustomers c ON o.CustomerID = c.CustomerID;
+
+
+
+
+
